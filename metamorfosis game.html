@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metamorfosis: Las Puertas</title>
+    <style>
+        /* Estilos CSS para centrar y decorar el juego */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background-image: url('mariposa.png'); /* Agrega la imagen de mariposas de fondo */
+            background-size: cover;
+            display: none; /* Inicialmente oculto */
+        }
+        #character {
+            position: absolute;
+            width: 30px; /* Tamaño reducido del personaje */
+            height: 30px; /* Tamaño reducido del personaje */
+            background-color: blue;
+            transition: left 0.2s, top 0.2s;
+        }
+        .door {
+            position: absolute;
+            width: 120px; /* Tamaño más grande para el texto */
+            height: 150px; /* Tamaño más grande para el texto */
+            background-color: brown;
+            cursor: pointer;
+        }
+        .start-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+        .story {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        #next-button {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="start-screen">
+        <h1>Bienvenido a Metamorfosis: Las Puertas</h1>
+        <p>Encuentra la puerta correcta para avanzar al siguiente nivel. Usa las flechas para mover al personaje y la barra espaciadora para seleccionar una puerta.</p>
+        <button id="start-button">Iniciar Juego</button>
+    </div>
+
+    <div id="game-container">
+        <h1 style="text-align: center;">Metamorfosis: Las Puertas</h1>
+        <div id="question" style="text-align: center;"></div>
+        <div id="options" style="text-align: center;">
+            <!-- Puertas se agregarán dinámicamente aquí -->
+        </div>
+        <div id="result" style="text-align: center;"></div>
+        <div class="story" id="story"></div>
+        <button id="next-button">Siguiente</button>
+        <div id="character"></div>
+    </div>
+
+    <script>
+        // Define los niveles y preguntas
+        const levels = [
+            { question: "¿Qué personaje principal sufre una transformación en un insecto gigante?", options: ["Gregor Samsa", "Grete Samsa", "Herr Samsa"], answer: "Gregor Samsa", story: "Gregor Samsa, un joven vendedor de viajes, se despierta un día convertido en un insecto gigante." },
+            { question: "¿En qué tipo de trabajo está Gregor antes de su transformación?", options: ["Vendedor de viajes", "Carpintero", "Abogado"], answer: "Vendedor de viajes", story: "Gregor trabaja como vendedor de viajes para mantener a su familia." },
+            { question: "¿Dónde pasa la mayor parte de su tiempo Gregor después de su transformación?", options: ["En su habitación", "En el jardín", "En el trabajo"], answer: "En su habitación", story: "Después de la transformación, Gregor se ve obligado a pasar la mayoría del tiempo en su habitación." },
+            { question: "¿Cómo reacciona la familia de Gregor ante su transformación?", options: ["Con miedo y repulsión", "Con alegría y sorpresa", "Con indiferencia"], answer: "Con miedo y repulsión", story: "La familia de Gregor reacciona con shock, miedo y repulsión al ver su nueva apariencia." },
+            { question: "¿Cómo se deteriora la salud de Gregor durante la historia?", options: ["Se debilita gradualmente", "Se vuelve más fuerte", "No cambia"], answer: "Se debilita gradualmente", story: "A medida que avanza la historia, la salud de Gregor se debilita gradualmente debido a su aislamiento y falta de cuidado." },
+            { question: "¿Cómo se siente Gregor debido a su aislamiento?", options: ["Solitario y triste", "Feliz y libre", "Enojado y vengativo"], answer: "Solitario y triste", story: "Gregor se siente extremadamente solo y triste debido a su aislamiento y la incomunicación con su familia." },
+            { question: "¿Qué hace la familia de Gregor con él cuando se convierte en un estorbo?", options: ["Lo confinan en su habitación", "Lo abandonan en el bosque", "Lo llevan a un hospital"], answer: "Lo confinan en su habitación", story: "La familia decide confinar a Gregor en su habitación cuando se convierte en un estorbo para ellos." },
+            { question: "¿Qué papel juega Grete en la vida de Gregor después de su transformación?", options: ["Cuida de él al principio, pero luego se cansa", "Se convierte en un insecto también", "Lo ignora por completo"], answer: "Cuida de él al principio, pero luego se cansa", story: "Grete, su hermana, cuida de Gregor al principio, pero con el tiempo se agota y pierde interés." },
+            { question: "¿Cómo se comporta el padre de Gregor hacia él después de la transformación?", options: ["Lo ataca y lo hiere", "Lo defiende y protege", "Lo apoya emocionalmente"], answer: "Lo ataca y lo hiere", story: "El padre de Gregor se vuelve hostil y lo ataca físicamente después de su transformación." },
+            { question: "¿Qué decisión toma la familia de Gregor al final de la historia?", options: ["Deshacerse de Gregor", "Buscar una cura para él", "Aceptar su condición"], answer: "Deshacerse de Gregor", story: "Al final, la familia decide deshacerse de Gregor, viéndolo como una carga." },
+            { question: "¿Cómo muere Gregor al final de la novela?", options: ["De hambre y negligencia", "En un accidente automovilístico", "De vejez"], answer: "De hambre y negligencia", story: "Gregor muere de hambre y negligencia después de ser herido por su padre." },
+            { question: "¿Cuál es una interpretación común del simbolismo en 'La Metamorfosis'?", options: ["Una exploración de la alienación y la incomprensión", "Una historia de amor y redención", "Una aventura de fantasía"], answer: "Una exploración de la alienación y la incomprensión", story: "La historia se interpreta comúnmente como una exploración de la alienación y la incomprensión en la sociedad." }
+        ];
+
+        // Respuestas correctas
+        const correctAnswers = [
+            "Gregor Samsa",
+            "Vendedor de viajes",
+            "En su habitación",
+            "Con miedo y repulsión",
+            "Se debilita gradualmente",
+            "Solitario y triste",
+            "Lo confinan en su habitación",
+            "Cuida de él al principio, pero luego se cansa",
+            "Lo ataca y lo hiere",
+            "Deshacerse de Gregor",
+            "De hambre y negligencia",
+            "Una exploración de la alienación y la incomprensión"
+        ];
+
+        let currentLevel = 0;
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const resultElement = document.getElementById("result");
+        const character = document.getElementById("character");
+        const storyElement = document.getElementById("story");
+        const nextButton = document.getElementById("next-button");
+
+        let characterPosition = { x: 0, y: 0 };
+        let gameStarted = false;
+
+        function moveCharacter(dx, dy) {
+            characterPosition.x += dx;
+            characterPosition.y += dy;
+            character.style.left = characterPosition.x + "px";
+            character.style.top = characterPosition.y + "px";
+        }
+
+        function shuffleArray(array) {
+            // Función para mezclar aleatoriamente un array
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createDoors(options) {
+            optionsElement.innerHTML = ""; // Limpiar las puertas anteriores
+            shuffleArray(options);
+
+            let doorLeft = 325; // Posición inicial de la primera puerta central
+            let doorTop = 200; // Posición vertical de las puertas
+
+            options.forEach((option) => {
+                const door = document.createElement("button");
+                door.textContent = option;
+                door.className = "door";
+                door.setAttribute("data-answer", option);
+                door.style.left = doorLeft + "px";
+                door.style.top = doorTop + "px";
+                doorLeft += 150; // Separación entre puertas
+                optionsElement.appendChild(door);
+            });
+        }
+
+        function loadLevel(level) {
+            questionElement.textContent = level.question;
+            createDoors(level.options);
+            storyElement.textContent = ""; // Limpiar el texto de la historia
+        }
+
+        function checkAnswer(selectedOption) {
+            const currentLevelData = levels[currentLevel];
+            if (selectedOption === correctAnswers[currentLevel]) {
+                resultElement.textContent = "Respuesta correcta. ¡Bien hecho!";
+                storyElement.textContent = currentLevelData.story; // Mostrar la historia relacionada
+                nextButton.style.display = "block";
+            } else {
+                resultElement.textContent = "Respuesta incorrecta. La respuesta correcta es: " + correctAnswers[currentLevel];
+                // Reiniciar el nivel actual
+                characterPosition = { x: 0, y: 0 };
+                character.style.left = characterPosition.x + "px";
+                character.style.top = characterPosition.y + "px";
+            }
+        }
+
+        function nextLevel() {
+            if (currentLevel < levels.length - 1) {
+                currentLevel++;
+                loadLevel(levels[currentLevel]);
+                resultElement.textContent = "";
+                storyElement.textContent = "";
+                nextButton.style.display = "none";
+            } else {
+                questionElement.textContent = "¡Felicidades! Has completado el juego.";
+                optionsElement.style.display = "none";
+                resultElement.textContent = "";
+                storyElement.textContent = "";
+                nextButton.style.display = "none";
+            }
+        }
+
+        // Iniciar el juego cuando se hace clic en el botón "Iniciar Juego"
+        document.getElementById("start-button").addEventListener("click", () => {
+            document.querySelector(".start-screen").style.display = "none";
+            document.getElementById("game-container").style.display = "block"; // Mostrar el juego
+            gameStarted = true;
+            loadLevel(levels[currentLevel]);
+        });
+
+        // Control del personaje con las teclas de flecha
+        document.addEventListener("keydown", (e) => {
+            if (gameStarted) {
+                switch (e.key) {
+                    case "ArrowUp":
+                        moveCharacter(0, -50);
+                        break;
+                    case "ArrowDown":
+                        moveCharacter(0, 50);
+                        break;
+                    case "ArrowLeft":
+                        moveCharacter(-50, 0);
+                        break;
+                    case "ArrowRight":
+                        moveCharacter(50, 0);
+                        break;
+                    case " ": // Barra espaciadora
+                        checkDoorInteraction();
+                        break;
+                }
+            }
+        });
+
+        // Función para verificar la interacción con la puerta
+        function checkDoorInteraction() {
+            if (gameStarted) {
+                const doors = document.querySelectorAll(".door");
+                for (const door of doors) {
+                    const doorRect = door.getBoundingClientRect();
+                    const characterRect = character.getBoundingClientRect();
+
+                    if (
+                        characterRect.right >= doorRect.left &&
+                        characterRect.left <= doorRect.right &&
+                        characterRect.bottom >= doorRect.top &&
+                        characterRect.top <= doorRect.bottom
+                    ) {
+                        checkAnswer(door.getAttribute("data-answer"));
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Avanzar al siguiente nivel cuando se hace clic en el botón "Siguiente"
+        nextButton.addEventListener("click", nextLevel);
+    </script>
+</body>
+</html>
